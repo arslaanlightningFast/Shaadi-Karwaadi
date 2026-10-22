@@ -1,0 +1,449 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  VENUE_MANAGER
+  CATERER
+  ADMIN
+}
+
+enum VendorType {
+  VENUE
+  CATERER
+  BOTH
+}
+
+enum VenueType {
+  INDOOR
+  OUTDOOR
+  COMBINED
+}
+
+enum PaymentStatus {
+  PENDING
+  ADVANCE_PAID
+  FULLY_PAID
+  REFUNDED
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum QuotationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum TransactionStatus {
+  CREATED
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum RefundStatus {
+  REQUESTED
+  APPROVED
+  PROCESSED
+  REJECTED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+}
+
+enum CommissionStatus {
+  COLLECTED
+  SETTLED
+}
+
+enum DocStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(CUSTOMER)
+  name          String
+  phone         String?
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  customerProfile CustomerProfile?
+  vendorProfile   VendorProfile?
+  eventPlans      EventPlan[]
+  bookings        Booking[]
+  quotations      Quotation[]
+  reviews         Review[]
+  messages        Message[]
+  notifications   Notification[]
+  auditLogs       AuditLogs[]
+}
+
+model CustomerProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address     String?
+  city        String?
+  preferences String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VendorProfile {
+  id             String      @id @default(uuid())
+  userId         String      @unique
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName   String
+  businessType   VendorType  @default(VENUE)
+  description    String?
+  gstin          String?
+  pan            String?
+  verified       Boolean     @default(false)
+  rating         Float       @default(0.0)
+  totalReviews   Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  venueListings    VenueListing[]
+  cateringListings CateringListing[]
+  verificationDocs VerificationDocument[]
+  vendorPayouts    VendorPayout[]
+}
+
+model VenueListing {
+  id                   String        @id @default(uuid())
+  vendorId             String
+  vendor               VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name                 String
+  description          String
+  address              String
+  city                 String
+  locality             String
+  capacityMin          Int
+  capacityMax          Int
+  venueType            VenueType     @default(COMBINED)
+  ac                   Boolean       @default(true)
+  parkingSpaces        Int           @default(50)
+  roomsCount           Int           @default(5)
+  bridalRooms          Int           @default(1)
+  powerBackup          Boolean       @default(true)
+  accessibility        Boolean       @default(true)
+  decorationPolicy     String?
+  outsideVendorPolicy  String?
+  eventTypesSupported  String[]
+  pricePerEvent        Float
+  advancePercentage    Float         @default(25.0)
+  securityDeposit      Float         @default(10000.0)
+  cancellationTerms    String?
+  operatingHours       String?
+  verificationStatus   DocStatus     @default(PENDING)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  images       VenueImage[]
+  amenities    VenueAmenity[]
+  availability VenueAvailability[]
+  bookings     Booking[]
+  quotations   Quotation[]
+  reviews      Review[]
+}
+
+model VenueImage {
+  id        String       @id @default(uuid())
+  venueId   String
+  venue     VenueListing @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  isPrimary Boolean      @default(false)
+}
+
+model VenueAmenity {
+  id      String       @id @default(uuid())
+  venueId String
+  venue   VenueListing @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name    String
+  icon    String?
+}
+
+model VenueAvailability {
+  id           String       @id @default(uuid())
+  venueId      String
+  venue        VenueListing @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  date         DateTime
+  timeSlot     String       @default("FULL_DAY") // MORNING, EVENING, FULL_DAY
+  isAvailable  Boolean      @default(true)
+  customPrice  Float?
+}
+
+model CateringListing {
+  id              String        @id @default(uuid())
+  vendorId        String
+  vendor          VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name            String
+  description     String
+  cuisines        String[]
+  vegOptions      Boolean       @default(true)
+  nonVegOptions   Boolean       @default(true)
+  jainOptions     Boolean       @default(false)
+  veganOptions    Boolean       @default(false)
+  serviceAreas    String[]
+  travelCharges   Float         @default(0.0)
+  staffIncluded   Boolean       @default(true)
+  servingEquipment Boolean      @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  menus        CateringMenu[]
+  availability CateringAvailability[]
+  bookings     Booking[]
+  quotations   Quotation[]
+  reviews      Review[]
+}
+
+model CateringMenu {
+  id           String          @id @default(uuid())
+  cateringId   String
+  catering     CateringListing @relation(fields: [cateringId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  pricePerPlate Float
+  minGuests    Int             @default(50)
+  starters     String[]
+  mainCourses  String[]
+  riceBreads   String[]
+  desserts     String[]
+  beverages    String[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  bookings     Booking[]
+}
+
+model CateringAvailability {
+  id          String          @id @default(uuid())
+  cateringId  String
+  catering    CateringListing @relation(fields: [cateringId], references: [id], onDelete: Cascade)
+  date        DateTime
+  isAvailable Boolean         @default(true)
+}
+
+model EventPlan {
+  id              String   @id @default(uuid())
+  customerId      String
+  customer        User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  eventName       String
+  eventDate       DateTime
+  city            String
+  estimatedGuests Int
+  status          String   @default("PLANNING")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bookings        Booking[]
+}
+
+model Booking {
+  id                 String           @id @default(uuid())
+  customerId         String
+  customer           User             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  eventPlanId        String?
+  eventPlan          EventPlan?       @relation(fields: [eventPlanId], references: [id], onDelete: SetNull)
+  venueId            String?
+  venue              VenueListing?    @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  cateringId         String?
+  catering           CateringListing? @relation(fields: [cateringId], references: [id], onDelete: SetNull)
+  menuId             String?
+  menu               CateringMenu?    @relation(fields: [menuId], references: [id], onDelete: SetNull)
+  eventDate          DateTime
+  timeSlot           String           @default("FULL_DAY")
+  guestCount         Int
+  totalAmount        Float
+  advanceAmount      Float
+  remainingAmount    Float
+  paymentStatus      PaymentStatus    @default(PENDING)
+  bookingStatus      BookingStatus    @default(PENDING)
+  specialRequirements String?
+  cancellationReason String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  transactions       PaymentTransaction[]
+  lineItems          BookingLineItem[]
+  payouts            VendorPayout[]
+  commission         PlatformCommission[]
+  reviews            Review[]
+}
+
+model BookingLineItem {
+  id          String   @id @default(uuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  description String
+  amount      Float
+}
+
+model Quotation {
+  id         String          @id @default(uuid())
+  customerId String
+  customer   User            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vendorId   String
+  venueId    String?
+  venue      VenueListing?   @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  cateringId String?
+  catering   CateringListing? @relation(fields: [cateringId], references: [id], onDelete: SetNull)
+  totalAmount Float
+  advanceAmount Float
+  validityDate DateTime
+  status     QuotationStatus @default(PENDING)
+  terms      String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model PaymentTransaction {
+  id                String            @id @default(uuid())
+  bookingId         String
+  booking           Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId        String
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Float
+  currency          String            @default("INR")
+  status            TransactionStatus @default(CREATED)
+  paymentMethod     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  refunds           Refund[]
+}
+
+model Refund {
+  id                    String             @id @default(uuid())
+  paymentTransactionId  String
+  paymentTransaction    PaymentTransaction @relation(fields: [paymentTransactionId], references: [id], onDelete: Cascade)
+  amount                Float
+  reason                String
+  status                RefundStatus       @default(REQUESTED)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+model VendorPayout {
+  id          String       @id @default(uuid())
+  vendorId    String
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  bookingId   String
+  booking     Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount      Float
+  status      PayoutStatus @default(PENDING)
+  payoutDate  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model PlatformCommission {
+  id                String           @id @default(uuid())
+  bookingId         String
+  booking           Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  commissionAmount  Float
+  rate              Float            @default(10.0)
+  status            CommissionStatus @default(COLLECTED)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Review {
+  id              String           @id @default(uuid())
+  bookingId       String
+  booking         Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId      String
+  customer        User             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  venueId         String?
+  venue           VenueListing?    @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  cateringId      String?
+  catering        CateringListing? @relation(fields: [cateringId], references: [id], onDelete: SetNull)
+  rating          Int
+  comment         String
+  vendorResponse  String?
+  verifiedBooking Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Conversation {
+  id         String    @id @default(uuid())
+  customerId String
+  vendorId   String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  messages   Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model VerificationDocument {
+  id           String        @id @default(uuid())
+  vendorId     String
+  vendor       VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  documentType String
+  documentUrl  String
+  status       DocStatus     @default(PENDING)
+  createdAt    DateTime      @default(now())
+}
+
+model AuditLogs {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
