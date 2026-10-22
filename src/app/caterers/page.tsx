@@ -29,7 +29,7 @@ export default function CaterersPage() {
               <Sparkles className="w-5 h-5" />
             </div>
             <span className="text-2xl font-serif font-bold bg-gradient-to-r from-[#831843] to-[#DB2777] bg-clip-text text-transparent">
-              ShaadiSthal
+              Shaadi Karwadi
             </span>
           </Link>
           <div className="flex items-center gap-4">

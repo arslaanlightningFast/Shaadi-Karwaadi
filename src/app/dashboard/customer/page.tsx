@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Sparkles, Calendar, Clock, DollarSign, ShieldCheck, ArrowRight, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/ui/Logo'
 
 export default function CustomerDashboard() {
   const [dashboard, setDashboard] = useState<any>(null)
@@ -24,14 +25,7 @@ export default function CustomerDashboard() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-[#FBCFE8] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#DB2777] to-[#831843] flex items-center justify-center text-white shadow-lg shadow-[#DB2777]/20">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <span className="text-2xl font-serif font-bold bg-gradient-to-r from-[#831843] to-[#DB2777] bg-clip-text text-transparent">
-              ShaadiSthal
-            </span>
-          </Link>
+          <Logo className="w-11 h-11" />
           <div className="flex items-center gap-4">
             <Link href="/venues" className="text-sm font-semibold hover:text-[#DB2777]">Browse Venues</Link>
             <Link href="/login" className="text-sm font-semibold hover:text-[#DB2777]">Logout</Link>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Sparkles, Lock, Mail, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/ui/Logo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -42,14 +43,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#FDF2F8] text-[#831843] flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-[#DB2777] selection:text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <Link href="/" className="inline-flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#DB2777] to-[#831843] flex items-center justify-center text-white shadow-xl shadow-[#DB2777]/30">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <span className="text-3xl font-serif font-bold bg-gradient-to-r from-[#831843] to-[#DB2777] bg-clip-text text-transparent">
-            ShaadiSthal
-          </span>
-        </Link>
+        <div className="flex justify-center mb-6">
+          <Logo className="w-14 h-14" />
+        </div>
         <h2 className="text-3xl font-serif font-bold text-[#831843]">Welcome Back</h2>
         <p className="mt-2 text-sm text-[#475569]">Sign in to manage your wedding venues and bookings</p>
       </div>
@@ -72,7 +68,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="customer@shaadisthal.com"
+                  placeholder="customer@shaadikarwadi.com"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#FBCFE8] bg-[#FDF2F8]/40 text-sm text-[#831843] focus:outline-none focus:border-[#DB2777]"
                 />
               </div>
